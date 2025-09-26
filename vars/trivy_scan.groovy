@@ -1,9 +1,5 @@
-def call(String path = ".") {
-    script {
-        sh """
-            docker run --rm \
-              -v ${pwd()}:${path} \
-              aquasec/trivy fs --severity HIGH,CRITICAL --exit-code 1 ${path}
-        """
-    }
+def call() {
+    sh """
+        trivy fs --severity HIGH,CRITICAL --format table --exit-code 1 .
+    """
 }
