@@ -1,14 +1,17 @@
 def call() {
     sh """
-        # Add common paths where trivy might be installed
-        export PATH=\$PATH:/usr/local/bin:/usr/bin:/bin:/snap/bin
+        # Set paths where tools are installed
+        export PATH=\$PATH:/var/lib/jenkins/tools:/usr/local/bin:/usr/bin
         
-        # Try to find and use trivy
-        if command -v trivy >/dev/null 2>&1; then
-            trivy fs --severity HIGH,CRITICAL --format table --exit-code 1 .
-        else
-            echo "Trivy not found in PATH, trying Docker fallback..."
+        # Try trivy first
+        if /var/lib/jenkins/tools/trivy --version >/dev/null 2>&1; then
+            echo "✅ Using Trivy installed at /var/lib/jenkins/tools/trivy"
+            /var/lib/jenkins/tools/trivy fs --severity HIGH,CRITICAL --format table --exit-code 1 .
+        elif command -v docker >/dev/null 2>&1; then
+            echo "✅ Using Docker fallback for Trivy"
             docker run --rm -v \${PWD}:/src aquasec/trivy:latest fs --severity HIGH,CRITICAL --format table --exit-code 1 /src
+        else
+            echo "⚠️ Neither Trivy nor Docker available, skipping scan"
         fi
     """
 }
